@@ -1,0 +1,268 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
+class MenuItem {
+    int id;
+    String name;
+    double price;
+    int quantity;
+
+    MenuItem(int id, String name, double price, int quantity) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+}
+
+class OrderItem {
+    MenuItem item;
+    int quantity;
+    double total;
+
+    OrderItem(MenuItem item, int quantity) {
+        this.item = item;
+        this.quantity = quantity;
+        this.total = item.price * quantity;
+    }
+}
+
+class Order {
+    String customerName;
+    ArrayList<OrderItem> items = new ArrayList<>();
+    double total;
+    boolean isPaid = false;
+    String paymentMethod = "Unpaid";
+
+    Order(String name) {
+        this.customerName = name;
+        this.total = 0;
+    }
+}
+
+class Reservation {
+    String customerName;
+    int tableNumber;
+
+    Reservation(String name, int tableNumber) {
+        this.customerName = name;
+        this.tableNumber = tableNumber;
+    }
+}
+
+public class RestaurantBasic {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        ArrayList<MenuItem> menu = new ArrayList<>();
+        ArrayList<Order> orders = new ArrayList<>();
+        ArrayList<Reservation> reservations = new ArrayList<>();
+        double totalSales = 0;
+
+        // Unique item IDs
+        menu.add(new MenuItem(1, "Mutton Biryani", 250.0, 10));
+        menu.add(new MenuItem(2, "Chicken 65", 150.0, 15));
+        menu.add(new MenuItem(3, "Mojito", 100.0, 20));
+        menu.add(new MenuItem(4, "Chicken Biryani", 150.0, 10));
+        menu.add(new MenuItem(5, "Cake", 80.0, 10));
+        menu.add(new MenuItem(6, "Chocolate Brownie", 200.0, 15));
+
+        boolean running = true;
+        while (running) {
+            System.out.println("Welcome to Achievers Restaurant");
+            System.out.println("\n1. User\n2. Admin\n0. Exit");
+            System.out.print("Choose your role: ");
+            int role = sc.nextInt();
+
+            if (role == 1) {
+                sc.nextLine();
+                System.out.print("Enter your name: ");
+                String name = sc.nextLine();
+
+                for (Order o : orders) {
+                    if (o.customerName.equalsIgnoreCase(name) && !o.isPaid) {
+                        while (!o.isPaid) {
+                            System.out.println("\nYou have an unpaid order:");
+                            for (OrderItem item : o.items) {
+                                System.out.println(item.item.name + " x" + item.quantity + " = Rs. " + item.total);
+                            }
+                            System.out.println("Total: Rs. " + o.total);
+                            System.out.print("Pay now? (yes to pay): ");
+                            String confirm = sc.nextLine();
+                            if (confirm.equalsIgnoreCase("yes")) {
+                                System.out.print("Payment Method (Cash/Card): ");
+                                o.paymentMethod = sc.nextLine();
+                                if (!o.paymentMethod.equalsIgnoreCase("Cash") && !o.paymentMethod.equalsIgnoreCase("Card")) {
+                                    System.out.println("Invalid payment method.");
+                                    continue;
+                                }
+                                o.isPaid = true;
+                                totalSales += o.total;
+                                System.out.println("Payment successful via " + o.paymentMethod);
+                            } else {
+                                System.out.println("You must pay the bill to continue.");
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                boolean userMenu = true;
+                while (userMenu) {
+                    System.out.println("\n--- User Menu ---");
+                    System.out.println("1. View Menu");
+                    System.out.println("2. Place Order");
+                    System.out.println("3. Reserve Table");
+                    System.out.println("0. Logout");
+                    System.out.print("Choose option: ");
+                    int option = sc.nextInt();
+
+                    if (option == 1) {
+                        for (MenuItem m : menu) {
+                            System.out.println(m.id + ". " + m.name + " - Rs. " + m.price + " (Stock: " + m.quantity + ")");
+                        }
+                    } else if (option == 2) {
+                        sc.nextLine();
+                        Order newOrder = new Order(name);
+                        System.out.print("How many items? ");
+                        int count = sc.nextInt();
+
+                        for (int i = 0; i < count; i++) {
+                            System.out.print("Enter item ID: ");
+                            int id = sc.nextInt();
+                            System.out.print("Enter quantity: ");
+                            int qty = sc.nextInt();
+                            boolean found = false;
+
+                            for (MenuItem m : menu) {
+                                if (m.id == id) {
+                                    found = true;
+                                    if (m.quantity >= qty) {
+                                        m.quantity -= qty;
+                                        OrderItem oi = new OrderItem(m, qty);
+                                        newOrder.items.add(oi);
+                                        newOrder.total += oi.total;
+                                        System.out.println(m.name + " x" + qty + " = Rs. " + oi.total);
+                                        System.out.println("Running Total: Rs. " + newOrder.total);
+                                    } else {
+                                        System.out.println("Not enough stock.");
+                                    }
+                                    break;
+                                }
+                            }
+
+                            if (!found) {
+                                System.out.println("Item not found.");
+                            }
+                        }
+
+                        if (newOrder.items.size() > 0) {
+                            orders.add(newOrder);
+                            System.out.println("Order placed successfully.");
+                            System.out.println("Total Amount to Pay: Rs. " + newOrder.total);
+
+                            while (!newOrder.isPaid) {
+                                sc.nextLine();
+                                System.out.print("Pay now? (yes to pay): ");
+                                String confirm = sc.nextLine();
+                                if (confirm.equalsIgnoreCase("yes")) {
+                                    System.out.print("Payment Method (Cash/Card): ");
+                                    newOrder.paymentMethod = sc.nextLine();
+                                    if (!newOrder.paymentMethod.equalsIgnoreCase("Cash") && !newOrder.paymentMethod.equalsIgnoreCase("Card")) {
+                                        System.out.println("Invalid payment method.");
+                                        continue;
+                                    }
+                                    newOrder.isPaid = true;
+                                    totalSales += newOrder.total;
+                                    System.out.println("Payment successful via " + newOrder.paymentMethod);
+
+                                    System.out.println("\n--- Receipt ---");
+                                    for (OrderItem item : newOrder.items) {
+                                        System.out.println(item.item.name + " x" + item.quantity + " = Rs. " + item.total);
+                                    }
+                                    System.out.println("Total Paid: Rs. " + newOrder.total + " via " + newOrder.paymentMethod);
+                                } else {
+                                    System.out.println("You must pay before doing anything else.");
+                                }
+                            }
+                        } else {
+                            System.out.println("No valid items in order.");
+                        }
+
+                    } else if (option == 3) {
+                        sc.nextLine();
+                        System.out.print("Enter table number to reserve: ");
+                        int t = sc.nextInt();
+                        reservations.add(new Reservation(name, t));
+                        System.out.println("Table reserved.");
+                    } else if (option == 0) {
+                        userMenu = false;
+                    } else {
+                        System.out.println("Invalid option.");
+                    }
+                }
+
+            } else if (role == 2) {
+                System.out.print("Enter admin password: ");
+                int pass = sc.nextInt();
+                if (pass != 1234) {
+                    System.out.println("Wrong password.");
+                    continue;
+                }
+
+                boolean adminMenu = true;
+                while (adminMenu) {
+                    System.out.println("\n--- Admin Menu ---");
+                    System.out.println("1. View Menu");
+                    System.out.println("2. Add Item");
+                    System.out.println("3. View Orders");
+                    System.out.println("4. View Sales");
+                    System.out.println("5. View Reservations");
+                    System.out.println("0. Logout");
+                    System.out.print("Choose option: ");
+                    int adminOption = sc.nextInt();
+
+                    if (adminOption == 1) {
+                        for (MenuItem m : menu) {
+                            System.out.println(m.id + ". " + m.name + " - Rs. " + m.price + " (Stock: " + m.quantity + ")");
+                        }
+                    } else if (adminOption == 2) {
+                        sc.nextLine();
+                        System.out.print("Item name: ");
+                        String itemName = sc.nextLine();
+                        System.out.print("Price: ");
+                        double price = sc.nextDouble();
+                        System.out.print("Quantity: ");
+                        int qty = sc.nextInt();
+                        menu.add(new MenuItem(menu.size() + 1, itemName, price, qty));
+                        System.out.println("Item added.");
+                    } else if (adminOption == 3) {
+                        for (Order o : orders) {
+                            System.out.println("\nOrder by: " + o.customerName + " | Paid: " + o.isPaid);
+                            for (OrderItem oi : o.items) {
+                                System.out.println("  " + oi.item.name + " x" + oi.quantity + " = Rs. " + oi.total);
+                            }
+                            System.out.println("Total: Rs. " + o.total);
+                        }
+                    } else if (adminOption == 4) {
+                        System.out.println("Total Sales: Rs. " + totalSales);
+                    } else if (adminOption == 5) {
+                        for (Reservation r : reservations) {
+                            System.out.println(r.customerName + " reserved table " + r.tableNumber);
+                        }
+                    } else if (adminOption == 0) {
+                        adminMenu = false;
+                    } else {
+                        System.out.println("Invalid option.");
+                    }
+                }
+
+            } else if (role == 0) {
+                running = false;
+            } else {
+                System.out.println("Invalid role.");
+            }
+        }
+        System.out.println("\nThank you for visiting Achievers Restaurant!");
+        sc.close();
+    }
+}
