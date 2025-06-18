@@ -1,0 +1,42 @@
+import java.util.*;
+
+public class Solution {
+    public int networkDelayTime(int[][] times, int N, int K) {
+        Map<Integer, List<int[]>> graph = new HashMap<>();
+        for (int i = 1; i <= N; i++) {
+            graph.put(i, new ArrayList<>());
+        }
+        for (int[] edge : times) {
+            int u = edge[0], v = edge[1], w = edge[2];
+            graph.get(u).add(new int[]{v, w});
+        }
+        int[] dist = new int[N + 1];
+        Arrays.fill(dist, Integer.MAX_VALUE);
+        dist[K] = 0;
+        PriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));
+        pq.offer(new int[]{0, K});
+
+        while (!pq.isEmpty()) {
+            int[] current = pq.poll();
+            int currentDist = current[0];
+            int node = current[1];
+
+            if (currentDist > dist[node]) continue;
+            for (int[] neighbor : graph.get(node)) {
+                int nextNode = neighbor[0];
+                int weight = neighbor[1];
+                int newDist = currentDist + weight;
+                if (newDist < dist[nextNode]) {
+                    dist[nextNode] = newDist;
+                    pq.offer(new int[]{newDist, nextNode});
+                }
+            }
+        }
+        int maxDist = 0;
+        for (int i = 1; i <= N; i++) {
+            if (dist[i] == Integer.MAX_VALUE) return -1;
+            maxDist = Math.max(maxDist, dist[i]);
+        }
+        return maxDist;
+    }
+}
